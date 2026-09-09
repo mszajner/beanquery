@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-09
+
 ### Added
 - `@Queryable` / `@QueryableField` annotations and the metadata registry.
 - `GET /api/bq/{entity}/metadata` and `POST /api/bq/{entity}/query`.
@@ -18,4 +20,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Spring Boot starter with auto-configuration and `beanquery.*` properties.
 - `beanquery-demo` module (H2) with `demo.http` / `demo.curl.sh` examples.
 
-[Unreleased]: https://github.com/mszajner/beanquery/commits/main
+[Unreleased]: https://github.com/mszajner/beanquery/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mszajner/beanquery/releases/tag/v0.1.0

@@ -24,12 +24,9 @@ strings are never passed through to JPA.
 <dependency>
     <groupId>io.github.mszajner</groupId>
     <artifactId>beanquery-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
-
-> `0.x` releases are not on Maven Central yet — until the first `0.1.0` tag is
-> published, build from source with `./mvnw install`.
 
 The starter auto-configures itself when a JPA `EntityManagerFactory` and Spring
 MVC are on the classpath.
