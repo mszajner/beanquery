@@ -1,0 +1,23 @@
+# Build output
+target/
+
+# Maven wrapper (the script is committed; a locally downloaded distro is not)
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / local
+*.log

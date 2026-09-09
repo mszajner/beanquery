@@ -1,0 +1,238 @@
+# beanquery demo requests - run beanquery-demo (mvn -pl beanquery-demo spring-boot:run), then execute these.
+# IntelliJ HTTP Client format. H2 console: http://localhost:8080/h2-console (jdbc:h2:mem:beanquery-demo)
+
+@host = http://localhost:8080
+@bq = {{host}}/api/bq
+
+### Field metadata for "product" (types, operators, enum values, flags)
+GET {{bq}}/product/metadata
+Accept: application/json
+
+### Field metadata for "category"
+GET {{bq}}/category/metadata
+Accept: application/json
+
+### Query: name contains "pro" (ILIKE) AND released in 2024 (BETWEEN on a date),
+###        sorted by the joined category name, first page of 10
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price", "releasedOn", "status", "category.name"],
+  "filters": [
+    { "field": "name", "op": "ILIKE", "value": "pro" },
+    { "field": "releasedOn", "op": "BETWEEN", "value": ["2024-01-01", "2024-12-31"] }
+  ],
+  "sort": [
+    { "field": "category.name", "direction": "ASC" },
+    { "field": "price", "direction": "DESC" }
+  ],
+  "page": { "number": 0, "size": 10 }
+}
+
+### Same query, second page - demonstrates stable pagination + totals
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price", "releasedOn", "category.name"],
+  "filters": [
+    { "field": "name", "op": "ILIKE", "value": "pro" },
+    { "field": "releasedOn", "op": "BETWEEN", "value": ["2024-01-01", "2024-12-31"] }
+  ],
+  "sort": [{ "field": "category.name", "direction": "ASC" }],
+  "page": { "number": 1, "size": 10 }
+}
+
+### Query: price range + in-stock + status IN, sorted by price
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["name", "sku", "price", "stock"],
+  "filters": [
+    { "field": "price", "op": "BETWEEN", "value": [50, 400] },
+    { "field": "stock", "op": "GT", "value": 0 },
+    { "field": "status", "op": "IN", "value": ["ACTIVE", "DRAFT"] }
+  ],
+  "sort": [{ "field": "price", "direction": "ASC" }],
+  "page": { "number": 0, "size": 20 }
+}
+
+### Query: filter on the nested category, LIKE with literal wildcard characters escaped
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "category.id", "category.name"],
+  "filters": [
+    { "field": "category.name", "op": "LIKE", "value": "Home" }
+  ],
+  "sort": [{ "field": "name", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}
+
+########################################################################
+### Filtry AND/OR (drzewo)                                            ###
+### Seed: 55 produktów. Kategoria 1 = "Elektronika". Produkty 51-53   ###
+### nie mają kategorii (LEFT JOIN). "Pro..." w nazwie: ~15 produktów. ###
+########################################################################
+
+### a) Płaska tablica (STARY format) - nadal działa; te same warunki co (e), ale AND.
+###    category.name = "Elektronika" AND name ILIKE "pro"  ->  ~4 wiersze (id 1, 2, 4, 10)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price", "category.name"],
+  "filters": [
+    { "field": "category.name", "op": "EQ", "value": "Elektronika" },
+    { "field": "name", "op": "ILIKE", "value": "pro" }
+  ],
+  "sort": [{ "field": "id", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}
+
+### b) Proste OR: price < 50 OR price > 500  ->  ~29 wierszy
+###    (jako AND te warunki wykluczają się -> 0 wierszy; OR to nadzbiór)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price"],
+  "filters": {
+    "logic": "or",
+    "children": [
+      { "field": "price", "op": "LT", "value": 50 },
+      { "field": "price", "op": "GT", "value": 500 }
+    ]
+  },
+  "sort": [{ "field": "price", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}
+
+### c) AND z zagnieżdżonym OR:
+###    category.name = "Elektronika" AND (name ILIKE "pro" OR price > 500)  ->  ~5 wierszy (id 1, 2, 4, 5, 10)
+###    (bez OR, czyli Elektronika AND pro AND >500, byłoby tylko 3: id 1, 2, 4)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price", "category.name"],
+  "filters": {
+    "logic": "and",
+    "children": [
+      { "field": "category.name", "op": "EQ", "value": "Elektronika" },
+      {
+        "logic": "or",
+        "children": [
+          { "field": "name", "op": "ILIKE", "value": "pro" },
+          { "field": "price", "op": "GT", "value": 500 }
+        ]
+      }
+    ]
+  },
+  "sort": [{ "field": "price", "direction": "ASC" }],
+  "page": { "number": 0, "size": 20 }
+}
+
+### d) (A OR B) AND (C OR D) - dwa OR-y spięte AND-em:
+###    (category.name = "Elektronika" OR category.name = "Audio")
+###      AND (price < 100 OR name ILIKE "pro")                    ->  ~9 wierszy
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "price", "category.name"],
+  "filters": {
+    "logic": "and",
+    "children": [
+      {
+        "logic": "or",
+        "children": [
+          { "field": "category.name", "op": "EQ", "value": "Elektronika" },
+          { "field": "category.name", "op": "EQ", "value": "Audio" }
+        ]
+      },
+      {
+        "logic": "or",
+        "children": [
+          { "field": "price", "op": "LT", "value": 100 },
+          { "field": "name", "op": "ILIKE", "value": "pro" }
+        ]
+      }
+    ]
+  },
+  "sort": [{ "field": "category.name", "direction": "ASC" }, { "field": "id", "direction": "ASC" }],
+  "page": { "number": 0, "size": 20 }
+}
+
+### e) OR z warunkiem na polu zagnieżdżonym:
+###    category.name = "Elektronika" OR name ILIKE "pro"  ->  ~22 wiersze
+###    UWAGA: produkty bez kategorii (51 "Pro Drone X", 52 "Pocket Pro Mic") NIE
+###    pasują do 1. gałęzi (category.name jest NULL po LEFT JOIN), ale WCHODZĄ do
+###    wyniku przez 2. gałąź (name ILIKE "pro"). To jest semantyka LEFT JOIN + OR.
+###    Te same warunki jako AND (Elektronika AND name~pro) dają tylko ~4 wiersze.
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name", "category.name"],
+  "filters": {
+    "logic": "or",
+    "children": [
+      { "field": "category.name", "op": "EQ", "value": "Elektronika" },
+      { "field": "name", "op": "ILIKE", "value": "pro" }
+    ]
+  },
+  "sort": [{ "field": "id", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}
+
+### f) Request przekraczający beanquery.max-filter-depth (domyślnie 5)
+###    -> oczekiwany błąd 400 z listą błędów, CELOWO (6 zagnieżdżonych grup)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id"],
+  "filters": {
+    "logic": "and", "children": [{
+      "logic": "and", "children": [{
+        "logic": "and", "children": [{
+          "logic": "and", "children": [{
+            "logic": "and", "children": [{
+              "logic": "and", "children": [
+                { "field": "price", "op": "GT", "value": 0 }
+              ]
+            }]
+          }]
+        }]
+      }]
+    }]
+  },
+  "page": { "number": 0, "size": 10 }
+}
+
+### Query without "page" - falls back to beanquery.default-page-size (20)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "name"],
+  "sort": [{ "field": "id", "direction": "ASC" }]
+}
+
+### 400 - field not on the whitelist (readable error list)
+POST {{bq}}/product/query
+Content-Type: application/json
+
+{
+  "select": ["id", "costPrice"],
+  "filters": [{ "field": "name", "op": "GT", "value": "x" }],
+  "page": { "number": 0, "size": 10 }
+}
+
+### 404 - unknown entity
+GET {{bq}}/invoice/metadata
+Accept: application/json

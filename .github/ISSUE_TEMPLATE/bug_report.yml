@@ -1,0 +1,25 @@
+name: Bug report
+description: Something doesn't behave as documented
+labels: [ bug ]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Include the request body and the HTTP response.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: beanquery version, Spring Boot version, Java version, database.
+      placeholder: "beanquery 0.1.0, Spring Boot 4.1.1, Java 21, PostgreSQL 16"
+    validations:
+      required: true
+  - type: textarea
+    id: entity
+    attributes:
+      label: Entity mapping (if relevant)
+      description: The `@Queryable` / `@QueryableField` annotations on the entity involved.
+      render: java

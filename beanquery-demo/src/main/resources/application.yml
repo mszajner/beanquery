@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:beanquery-demo;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true   # run data.sql after Hibernate builds the schema
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+
+# beanquery defaults shown explicitly; all optional
+beanquery:
+  enabled: true
+  base-path: /api/bq
+  max-page-size: 200
+  default-page-size: 20
+
+logging:
+  level:
+    org.hibernate.SQL: info
