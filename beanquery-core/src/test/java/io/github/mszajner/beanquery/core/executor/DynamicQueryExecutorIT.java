@@ -48,6 +48,7 @@ import io.github.mszajner.beanquery.core.query.Page;
 import io.github.mszajner.beanquery.core.query.PageInfo;
 import io.github.mszajner.beanquery.core.query.QueryRequest;
 import io.github.mszajner.beanquery.core.query.QueryResult;
+import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
 import io.github.mszajner.beanquery.core.query.Sort;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -407,6 +408,15 @@ class DynamicQueryExecutorIT {
         // matches: o4 (CANCELLED), o5 (PAID & 250)  -> total 2, but page size 1
         assertThat(ids(result)).containsExactly(4L);
         assertThat(result.page()).isEqualTo(new PageInfo(0, 1, 2, 2));
+    }
+
+    @Test
+    void alwaysFalsePredicateProducesEmptyResult() {
+        ResolvedFilterNode tree = new ResolvedFilterNode.Group(LogicalOperator.OR,
+                List.of(new ResolvedFilterNode.AlwaysFalse()));
+        QueryResult result = executor.executeResolved(ORDER_META, tree, new Page(0, 10));
+        assertThat(result.rows()).isEmpty();
+        assertThat(result.page().totalElements()).isZero();
     }
 
     private static int countOccurrences(String haystack, String needle) {

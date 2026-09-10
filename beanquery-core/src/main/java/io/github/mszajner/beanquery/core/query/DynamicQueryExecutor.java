@@ -98,6 +98,27 @@ public class DynamicQueryExecutor {
         return new QueryResult(rows, new PageInfo(page.number(), page.size(), totalElements, totalPages));
     }
 
+    /**
+     * Test seam - runs an already-resolved tree without the JSON conversion layer.
+     * It selects a single arbitrary selectable field of {@code meta} and applies
+     * {@code resolved} as-is. Not part of the supported public API; it is only
+     * {@code public} because the executor IT lives in a different package.
+     */
+    @Transactional(readOnly = true)
+    public QueryResult executeResolved(EntityMetadata meta, ResolvedFilterNode resolved, Page page) {
+        Objects.requireNonNull(meta, "meta");
+        Objects.requireNonNull(page, "page");
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        List<FieldMetadata> selectFields = resolveSelect(meta, List.of(firstSelectable(meta)));
+
+        List<Map<String, Object>> rows = fetchRows(cb, meta, selectFields, resolved, List.of(), page);
+        long totalElements = count(cb, meta, resolved);
+        int totalPages = page.size() == 0 ? 0 : (int) ((totalElements + page.size() - 1) / page.size());
+
+        return new QueryResult(rows, new PageInfo(page.number(), page.size(), totalElements, totalPages));
+    }
+
     private ResolvedFilterNode resolveFilters(EntityMetadata meta, FilterNode filters) {
         try {
             return valueConverter.resolve(filters, meta);
@@ -180,6 +201,9 @@ public class DynamicQueryExecutor {
     private Predicate toPredicate(CriteriaBuilder cb, PathResolver paths, ResolvedFilterNode node) {
         if (node == null) {
             return null;
+        }
+        if (node instanceof ResolvedFilterNode.AlwaysFalse) {
+            return cb.equal(cb.literal(1), cb.literal(0));
         }
         if (node instanceof ResolvedFilterNode.Group group) {
             Predicate[] parts = group.children().stream()
@@ -267,6 +291,15 @@ public class DynamicQueryExecutor {
             fields.add(requireField(meta, name));
         }
         return fields;
+    }
+
+    private static String firstSelectable(EntityMetadata meta) {
+        return meta.fields().stream()
+                .filter(FieldMetadata::selectable)
+                .map(FieldMetadata::name)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Entity '" + meta.name() + "' has no selectable field"));
     }
 
     private static FieldMetadata requireField(EntityMetadata meta, String name) {
