@@ -110,6 +110,18 @@ class QueryableEntityRegistryTest {
     }
 
     @Test
+    void scalarFieldsAreKindColumn() {
+        EntityMetadata customer = registryOf(CustomerModel.class).getRequired("customer");
+        assertThat(customer.field("name").orElseThrow().kind()).isEqualTo(FieldKind.COLUMN);
+    }
+
+    @Test
+    void nestedAssociationFieldsAreKindJoined() {
+        EntityMetadata order = registryOf(PurchaseOrderModel.class).getRequired("purchaseOrderModel");
+        assertThat(order.field("customer.name").orElseThrow().kind()).isEqualTo(FieldKind.JOINED);
+    }
+
+    @Test
     void rejectsDuplicateEntityNames() {
         assertThatThrownBy(() -> registryOf(DuplicateA.class, DuplicateB.class))
                 .isInstanceOf(QueryableMetadataException.class)

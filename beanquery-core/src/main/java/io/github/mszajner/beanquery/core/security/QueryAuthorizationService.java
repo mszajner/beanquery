@@ -24,6 +24,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.query.QueryRequest;
 import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
@@ -99,6 +100,14 @@ public class QueryAuthorizationService {
         FieldMetadata field = meta.field(filter.field()).orElse(null);
         if (field == null) {
             throw configurationError(authorizer, meta, "unknown field '" + filter.field() + "'");
+        }
+        if (field.kind() == FieldKind.REFERENCE) {
+            if (filter.op() == null) {
+                throw configurationError(authorizer, meta,
+                        "operator must not be null for field '" + filter.field() + "'");
+            }
+            // the executor's ReferenceFilterTranslator validates the operator and resolves the value
+            return new ResolvedFilterNode.Condition(field, filter.op(), filter.value());
         }
         if (filter.op() == null || !field.allows(filter.op())) {
             throw configurationError(authorizer, meta, "operator " + filter.op() + " is not allowed for field '"

@@ -53,7 +53,7 @@ class BeanQueryControllerBasePathTest {
 
     @Test
     void servesUnderTheConfiguredBasePath() throws Exception {
-        when(registry.getRequired("order")).thenReturn(new EntityMetadata("order", Object.class, List.of()));
+        when(registry.getRequired("order")).thenReturn(new EntityMetadata("order", Object.class, List.of(), List.of()));
 
         mvc.perform(get("/data/query/order/metadata"))
                 .andExpect(status().isOk())

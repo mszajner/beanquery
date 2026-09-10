@@ -20,6 +20,8 @@ import io.github.mszajner.beanquery.core.metadata.QueryableEntityRegistry;
 import io.github.mszajner.beanquery.core.query.DynamicQueryExecutor;
 import io.github.mszajner.beanquery.core.query.FilterValueConverter;
 import io.github.mszajner.beanquery.core.query.QueryRequestValidator;
+import io.github.mszajner.beanquery.core.reference.ReferenceResolver;
+import io.github.mszajner.beanquery.core.reference.ReferenceResolvers;
 import io.github.mszajner.beanquery.core.security.QueryAuthorizationService;
 import io.github.mszajner.beanquery.core.security.QueryAuthorizer;
 import io.github.mszajner.beanquery.core.web.BeanQueryController;
@@ -55,8 +57,15 @@ public class BeanQueryAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public QueryableEntityRegistry beanQueryEntityRegistry(EntityManagerFactory entityManagerFactory) {
-        return new QueryableEntityRegistry(entityManagerFactory);
+    public ReferenceResolvers beanQueryReferenceResolvers(ObjectProvider<ReferenceResolver> resolvers) {
+        return new ReferenceResolvers(resolvers.orderedStream().toList());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public QueryableEntityRegistry beanQueryEntityRegistry(EntityManagerFactory entityManagerFactory,
+            ReferenceResolvers referenceResolvers) {
+        return new QueryableEntityRegistry(entityManagerFactory, referenceResolvers.names());
     }
 
     @Bean
@@ -74,8 +83,10 @@ public class BeanQueryAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public DynamicQueryExecutor beanQueryExecutor(EntityManager entityManager, FilterValueConverter valueConverter) {
-        return new DynamicQueryExecutor(entityManager, valueConverter);
+    public DynamicQueryExecutor beanQueryExecutor(EntityManager entityManager, FilterValueConverter valueConverter,
+            ReferenceResolvers referenceResolvers, BeanQueryProperties properties) {
+        return new DynamicQueryExecutor(entityManager, valueConverter,
+                referenceResolvers, properties.getMaxReferenceFilterIds());
     }
 
     @Bean

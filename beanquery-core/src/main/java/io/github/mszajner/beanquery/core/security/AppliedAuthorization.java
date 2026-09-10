@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
+import io.github.mszajner.beanquery.core.metadata.ReferenceMetadata;
 import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
 
 /**
@@ -44,9 +45,25 @@ public record AppliedAuthorization(List<ResolvedFilterNode> mandatoryPredicates,
         if (hiddenFields.isEmpty()) {
             return meta;
         }
+        // A reference whose FK id column is hidden cannot be translated at all
+        // (ReferenceFilterTranslator needs that column), so drop the whole reference
+        // and every one of its sub-fields - they then behave as unregistered.
+        List<String> droppedReferencePrefixes = meta.references().stream()
+                .filter(ref -> hiddenFields.contains(ref.idFieldPath()))
+                .map(ref -> ref.name() + ".")
+                .toList();
         List<FieldMetadata> visible = meta.fields().stream()
                 .filter(field -> !hiddenFields.contains(field.name()))
+                .filter(field -> droppedReferencePrefixes.stream().noneMatch(prefix -> field.name().startsWith(prefix)))
                 .toList();
-        return new EntityMetadata(meta.name(), meta.entityClass(), visible);
+        List<ReferenceMetadata> references = meta.references().stream()
+                .filter(ref -> !hiddenFields.contains(ref.idFieldPath()))
+                .map(ref -> new ReferenceMetadata(ref.name(), ref.idFieldPath(),
+                        ref.fields().stream()
+                                .filter(sub -> !hiddenFields.contains(ref.name() + "." + sub))
+                                .toList()))
+                .filter(ref -> !ref.fields().isEmpty())
+                .toList();
+        return new EntityMetadata(meta.name(), meta.entityClass(), visible, references);
     }
 }

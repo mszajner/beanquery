@@ -42,6 +42,9 @@ public class BeanQueryProperties {
     /** Maximum total number of filter leaf conditions in one request. */
     private int maxFilterConditions = 50;
 
+    /** Largest id set a {@code ReferenceResolver.resolveFilter} may return before the request is rejected. */
+    private int maxReferenceFilterIds = 1000;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -88,5 +91,13 @@ public class BeanQueryProperties {
 
     public void setMaxFilterConditions(int maxFilterConditions) {
         this.maxFilterConditions = maxFilterConditions;
+    }
+
+    public int getMaxReferenceFilterIds() {
+        return maxReferenceFilterIds;
+    }
+
+    public void setMaxReferenceFilterIds(int maxReferenceFilterIds) {
+        this.maxReferenceFilterIds = maxReferenceFilterIds;
     }
 }

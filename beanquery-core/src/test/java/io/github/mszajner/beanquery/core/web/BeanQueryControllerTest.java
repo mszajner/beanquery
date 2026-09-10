@@ -30,8 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.QueryableEntityRegistry;
+import io.github.mszajner.beanquery.core.metadata.ReferenceMetadata;
 import io.github.mszajner.beanquery.core.metadata.UnknownEntityException;
 import io.github.mszajner.beanquery.core.query.DynamicQueryExecutor;
 import io.github.mszajner.beanquery.core.query.Page;
@@ -70,7 +72,10 @@ class BeanQueryControllerTest {
             field("createdAt", java.time.Instant.class, true, true, true),
             field("secret", String.class, false, false, false),
             new FieldMetadata("customer.name", "customer.name", String.class, true, false, true,
-                    DefaultOperators.forType(String.class))));
+                    DefaultOperators.forType(String.class), FieldKind.JOINED),
+            new FieldMetadata("customer.tier", "customer.tier", String.class, true, false, false,
+                    DefaultOperators.forType(String.class), FieldKind.REFERENCE)),
+            List.of(new ReferenceMetadata("customer", "customerId", List.of("name", "tier"))));
 
     @Autowired
     private MockMvc mvc;
@@ -109,6 +114,16 @@ class BeanQueryControllerTest {
                 .andExpect(jsonPath("$.capabilities.filterLogic").value(hasItems("AND", "OR")))
                 .andExpect(jsonPath("$.capabilities.maxFilterDepth").value(5))
                 .andExpect(jsonPath("$.capabilities.maxFilterConditions").value(50));
+    }
+
+    @Test
+    void metadataReportsFieldKind() throws Exception {
+        mvc.perform(get("/api/bq/order/metadata"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fields[?(@.name == 'id')].kind", hasItem("COLUMN")))
+                .andExpect(jsonPath("$.fields[?(@.name == 'customer.name')].kind", hasItem("JOINED")))
+                .andExpect(jsonPath("$.fields[?(@.name == 'customer.tier')].kind", hasItem("REFERENCE")))
+                .andExpect(jsonPath("$.fields[?(@.name == 'customer.tier')].sortable", hasItem(false)));
     }
 
     @Test
@@ -187,7 +202,7 @@ class BeanQueryControllerTest {
             boolean selectable, boolean filterable, boolean sortable) {
         Set<io.github.mszajner.beanquery.core.metadata.FilterOperator> ops = DefaultOperators.forType(type);
         return new FieldMetadata(name, name, type, selectable, filterable, sortable,
-                ops.isEmpty() ? Set.of() : ops);
+                ops.isEmpty() ? Set.of() : ops, FieldKind.COLUMN);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

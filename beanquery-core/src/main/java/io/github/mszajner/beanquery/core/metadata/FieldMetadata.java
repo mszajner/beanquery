@@ -36,6 +36,7 @@ import java.util.Set;
  * @param allowedOperators operators permitted in a filter on this field;
  *                         never {@code null}, iteration follows
  *                         {@link FilterOperator} declaration order
+ * @param kind             how this field is backed; never {@code null}
  */
 public record FieldMetadata(
         String name,
@@ -44,12 +45,14 @@ public record FieldMetadata(
         boolean selectable,
         boolean filterable,
         boolean sortable,
-        Set<FilterOperator> allowedOperators) {
+        Set<FilterOperator> allowedOperators,
+        FieldKind kind) {
 
     public FieldMetadata {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(path, "path");
         Objects.requireNonNull(javaType, "javaType");
+        kind = Objects.requireNonNull(kind, "kind");
         allowedOperators = (allowedOperators == null || allowedOperators.isEmpty())
                 ? Collections.unmodifiableSet(EnumSet.noneOf(FilterOperator.class))
                 : Collections.unmodifiableSet(EnumSet.copyOf(allowedOperators));

@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -319,7 +320,7 @@ class FilterValueConverterTest {
     }
 
     private static FieldMetadata field(String name, Class<?> type) {
-        return new FieldMetadata(name, name, type, true, true, true, Set.of());
+        return new FieldMetadata(name, name, type, true, true, true, Set.of(), FieldKind.COLUMN);
     }
 
     private static JsonNode node(String raw) {
