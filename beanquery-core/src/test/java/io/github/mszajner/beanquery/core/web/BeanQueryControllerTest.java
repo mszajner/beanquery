@@ -71,7 +71,7 @@ class BeanQueryControllerTest {
             field("createdAt", java.time.Instant.class, true, true, true),
             field("secret", String.class, false, false, false),
             new FieldMetadata("customer.name", "customer.name", String.class, true, false, true,
-                    DefaultOperators.forType(String.class), FieldKind.JOINED)));
+                    DefaultOperators.forType(String.class), FieldKind.JOINED)), List.of());
 
     @Autowired
     private MockMvc mvc;

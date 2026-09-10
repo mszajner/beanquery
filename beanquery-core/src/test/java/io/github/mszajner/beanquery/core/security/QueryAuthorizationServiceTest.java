@@ -39,7 +39,7 @@ class QueryAuthorizationServiceTest {
             field("id", Long.class),
             field("status", String.class),
             field("tenantId", String.class),
-            field("region", String.class)));
+            field("region", String.class)), List.of());
 
     private AppliedAuthorization authorize(List<QueryAuthorizer> authorizers) {
         return new QueryAuthorizationService(authorizers).authorize(ORDER, null);

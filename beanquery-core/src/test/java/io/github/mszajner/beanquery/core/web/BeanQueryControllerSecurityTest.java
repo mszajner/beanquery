@@ -64,7 +64,7 @@ class BeanQueryControllerSecurityTest {
             field("id", Long.class),
             field("status", String.class),
             field("totalAmount", java.math.BigDecimal.class),
-            field("tenantId", String.class)));
+            field("tenantId", String.class)), List.of());
 
     @Autowired
     private MockMvc mvc;

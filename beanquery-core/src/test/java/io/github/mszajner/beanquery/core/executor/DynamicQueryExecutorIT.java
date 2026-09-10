@@ -84,7 +84,7 @@ class DynamicQueryExecutorIT {
             fld("placedOn", "placedOn", LocalDate.class),
             fld("customer.id", "customer.id", Long.class),
             fld("customer.name", "customer.name", String.class),
-            fld("customer.tier", "customer.tier", Customer.Tier.class)));
+            fld("customer.tier", "customer.tier", Customer.Tier.class)), List.of());
 
     @Autowired
     private TestEntityManager em;

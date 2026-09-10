@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
+import io.github.mszajner.beanquery.core.metadata.ReferenceMetadata;
 import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
 
 /**
@@ -47,6 +48,13 @@ public record AppliedAuthorization(List<ResolvedFilterNode> mandatoryPredicates,
         List<FieldMetadata> visible = meta.fields().stream()
                 .filter(field -> !hiddenFields.contains(field.name()))
                 .toList();
-        return new EntityMetadata(meta.name(), meta.entityClass(), visible);
+        List<ReferenceMetadata> references = meta.references().stream()
+                .map(ref -> new ReferenceMetadata(ref.name(), ref.idFieldPath(),
+                        ref.fields().stream()
+                                .filter(sub -> !hiddenFields.contains(ref.name() + "." + sub))
+                                .toList()))
+                .filter(ref -> !ref.fields().isEmpty())
+                .toList();
+        return new EntityMetadata(meta.name(), meta.entityClass(), visible, references);
     }
 }

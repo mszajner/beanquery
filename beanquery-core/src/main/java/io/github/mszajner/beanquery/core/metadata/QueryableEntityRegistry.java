@@ -135,7 +135,7 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
             }
         });
 
-        return new EntityMetadata(name, entityClass, List.copyOf(fields.values()));
+        return new EntityMetadata(name, entityClass, List.copyOf(fields.values()), List.of());
     }
 
     private static List<FieldMetadata> buildFields(Class<?> entityClass, Field field, QueryableField annotation) {

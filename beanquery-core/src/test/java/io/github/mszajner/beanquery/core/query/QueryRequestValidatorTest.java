@@ -72,7 +72,7 @@ class QueryRequestValidatorTest {
                     EQ, NE, GT, GTE, LT, LTE, BETWEEN, IN, IS_NULL, IS_NOT_NULL),
             field("secret", String.class, false, false, false),
             field("label", String.class, true, false, true, EQ, NE),
-            field("rank", Integer.class, true, true, false, EQ, NE, GT, LT)));
+            field("rank", Integer.class, true, true, false, EQ, NE, GT, LT)), List.of());
 
     private final QueryRequestValidator validator =
             new QueryRequestValidator(MAX_PAGE_SIZE, MAX_DEPTH, MAX_CONDITIONS);
