@@ -17,8 +17,11 @@
 package io.github.mszajner.beanquery.core.query;
 
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
+import io.github.mszajner.beanquery.core.metadata.ReferenceMetadata;
+import io.github.mszajner.beanquery.core.reference.ReferenceResolvers;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TypedQuery;
@@ -63,10 +66,20 @@ public class DynamicQueryExecutor {
 
     private final EntityManager entityManager;
     private final FilterValueConverter valueConverter;
+    private final ReferenceFilterTranslator referenceFilterTranslator;
+    private final ReferenceEnricher referenceEnricher;
 
     public DynamicQueryExecutor(EntityManager entityManager, FilterValueConverter valueConverter) {
+        this(entityManager, valueConverter, ReferenceResolvers.EMPTY, 1000);
+    }
+
+    public DynamicQueryExecutor(EntityManager entityManager, FilterValueConverter valueConverter,
+            ReferenceResolvers referenceResolvers, int maxReferenceFilterIds) {
         this.entityManager = Objects.requireNonNull(entityManager, "entityManager");
         this.valueConverter = Objects.requireNonNull(valueConverter, "valueConverter");
+        Objects.requireNonNull(referenceResolvers, "referenceResolvers");
+        this.referenceFilterTranslator = new ReferenceFilterTranslator(referenceResolvers, maxReferenceFilterIds);
+        this.referenceEnricher = new ReferenceEnricher(referenceResolvers);
     }
 
     @Transactional(readOnly = true)
@@ -87,6 +100,7 @@ public class DynamicQueryExecutor {
 
         List<FieldMetadata> selectFields = resolveSelect(meta, request.select());
         ResolvedFilterNode filters = withMandatory(resolveFilters(meta, request.filters()), mandatoryPredicates);
+        filters = referenceFilterTranslator.translate(filters, meta);
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         Page page = request.page();
@@ -152,10 +166,29 @@ public class DynamicQueryExecutor {
         Root<Object> root = cq.from(entityClass(meta));
         PathResolver paths = new PathResolver(root);
 
-        List<Selection<?>> selections = new ArrayList<>(selectFields.size());
-        for (FieldMetadata field : selectFields) {
+        // 1. Criteria selections: non-REFERENCE select fields, then internal id columns
+        //    for any referenced field present in select (appended only if not already selected).
+        List<FieldMetadata> columnSelects = selectFields.stream()
+                .filter(f -> f.kind() != FieldKind.REFERENCE)
+                .toList();
+
+        List<Selection<?>> selections = new ArrayList<>();
+        for (FieldMetadata field : columnSelects) {
             selections.add(paths.resolve(field.path()));
         }
+
+        List<ReferenceMetadata> selectedRefs = referencesInSelect(meta, selectFields);
+        Map<String, Integer> idColumnIndex = new LinkedHashMap<>();
+        for (ReferenceMetadata ref : selectedRefs) {
+            int existing = indexOfPath(columnSelects, ref.idFieldPath());
+            if (existing >= 0) {
+                idColumnIndex.put(ref.name(), existing);
+            } else {
+                selections.add(paths.resolve(ref.idFieldPath()));
+                idColumnIndex.put(ref.name(), selections.size() - 1);
+            }
+        }
+
         cq.select(cb.tuple(selections.toArray(new Selection<?>[0])));
 
         Predicate where = toPredicate(cb, paths, filters);
@@ -170,15 +203,64 @@ public class DynamicQueryExecutor {
         query.setMaxResults(page.size());
 
         List<Tuple> tuples = query.getResultList();
+
+        // 2. assemble rows in select order (REFERENCE keys as null placeholders)
         List<Map<String, Object>> rows = new ArrayList<>(tuples.size());
         for (Tuple tuple : tuples) {
             Map<String, Object> row = new LinkedHashMap<>();
-            for (int i = 0; i < selectFields.size(); i++) {
-                row.put(selectFields.get(i).name(), tuple.get(i));
+            int col = 0;
+            for (FieldMetadata field : selectFields) {
+                if (field.kind() == FieldKind.REFERENCE) {
+                    row.put(field.name(), null);
+                } else {
+                    row.put(field.name(), tuple.get(col++));
+                }
             }
             rows.add(row);
         }
+
+        // 3. enrich REFERENCE keys via the resolvers
+        if (!selectedRefs.isEmpty()) {
+            List<ReferenceEnricher.Selection> enrichSelections = new ArrayList<>();
+            for (ReferenceMetadata ref : selectedRefs) {
+                int idx = idColumnIndex.get(ref.name());
+                List<Object> idPerRow = tuples.stream().map(t -> (Object) t.get(idx)).toList();
+                List<String> subs = subFieldsInSelect(ref, selectFields);
+                enrichSelections.add(new ReferenceEnricher.Selection(ref, subs, idPerRow));
+            }
+            referenceEnricher.enrich(rows, enrichSelections);
+        }
         return rows;
+    }
+
+    private static List<ReferenceMetadata> referencesInSelect(EntityMetadata meta, List<FieldMetadata> selectFields) {
+        LinkedHashMap<String, ReferenceMetadata> refs = new LinkedHashMap<>();
+        for (FieldMetadata f : selectFields) {
+            if (f.kind() == FieldKind.REFERENCE) {
+                meta.referenceForField(f.name()).ifPresent(r -> refs.putIfAbsent(r.name(), r));
+            }
+        }
+        return List.copyOf(refs.values());
+    }
+
+    private static List<String> subFieldsInSelect(ReferenceMetadata ref, List<FieldMetadata> selectFields) {
+        List<String> subs = new ArrayList<>();
+        String prefix = ref.name() + ".";
+        for (FieldMetadata f : selectFields) {
+            if (f.kind() == FieldKind.REFERENCE && f.name().startsWith(prefix)) {
+                subs.add(f.name().substring(prefix.length()));
+            }
+        }
+        return subs;
+    }
+
+    private static int indexOfPath(List<FieldMetadata> fields, String path) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).path().equals(path)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     // -- count query ----------------------------------------------------
@@ -271,6 +353,9 @@ public class DynamicQueryExecutor {
         Set<String> orderedPaths = new HashSet<>();
         for (Sort clause : sortClauses) {
             FieldMetadata field = requireField(meta, clause.field());
+            if (field.kind() == FieldKind.REFERENCE) {
+                throw new InvalidQueryException(List.of("sort: field '" + field.name() + "' is not sortable"));
+            }
             orderedPaths.add(field.path());
             Expression<?> path = paths.resolve(field.path());
             orders.add(clause.direction() == Direction.DESC ? cb.desc(path) : cb.asc(path));
