@@ -73,3 +73,24 @@ INSERT INTO product (id, name, sku, price, stock, released_on, status, category_
   (53, 'Mystery Bundle',   'DEMO-03',  310.00,   9, DATE '2023-11-20', 'ACTIVE', NULL),
   (54, 'Nano Cable',       'DEMO-04',    9.00, 700, DATE '2024-01-05', 'ACTIVE', 1),
   (55, 'Pro Server Rack',  'DEMO-05',  980.00,   3, DATE '2024-08-15', 'ACTIVE', 7);
+
+-- customer module -----------------------------------------------------------
+INSERT INTO customer (id, name, tier) VALUES
+  (1, 'Acme Corp',      'gold'),
+  (2, 'Beta Industries','silver'),
+  (3, 'Ceres Ltd',      'gold'),
+  (4, 'Delta LLC',      'bronze');
+
+-- order module (customer_id is a plain column, no FK constraint) -------------
+--   ids 8,9 have a NULL customer_id; id 10 points at a non-existent customer (99)
+INSERT INTO customer_order (id, status, total, customer_id) VALUES
+  ( 1, 'NEW',      120.00, 1),
+  ( 2, 'PAID',     340.00, 1),
+  ( 3, 'NEW',       55.00, 2),
+  ( 4, 'SHIPPED',  900.00, 3),
+  ( 5, 'PAID',      72.50, 3),
+  ( 6, 'NEW',      210.00, 4),
+  ( 7, 'CANCELLED', 18.00, 2),
+  ( 8, 'NEW',      460.00, NULL),
+  ( 9, 'PAID',     130.00, NULL),
+  (10, 'SHIPPED',  999.00, 99);
