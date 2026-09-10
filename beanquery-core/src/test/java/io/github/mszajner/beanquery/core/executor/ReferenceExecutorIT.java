@@ -118,6 +118,41 @@ class ReferenceExecutorIT {
     }
 
     @Test
+    void alwaysFalseFromEmptyReferenceBranchDoesNotSuppressAnOrSibling() {
+        QueryResult result = executor.execute(meta, new QueryRequest(
+                List.of("id"),
+                new io.github.mszajner.beanquery.core.query.GroupNode(
+                        io.github.mszajner.beanquery.core.query.LogicalOperator.OR,
+                        List.of(
+                                new io.github.mszajner.beanquery.core.query.ConditionNode(
+                                        "customer.name", FilterOperator.ILIKE,
+                                        new tools.jackson.databind.node.StringNode("no-such-customer")),
+                                new io.github.mszajner.beanquery.core.query.ConditionNode(
+                                        "id", FilterOperator.EQ,
+                                        tools.jackson.databind.node.IntNode.valueOf(1)))),
+                List.of(), new Page(0, 10)));
+
+        assertThat(result.rows()).extracting(r -> r.get("id")).containsExactly(1L);
+        assertThat(result.page().totalElements()).isEqualTo(1);
+    }
+
+    @Test
+    void fkIdColumnExplicitlyInSelectIsReturnedOnceAlongsideEnrichedReferenceField() {
+        QueryResult result = executor.execute(meta, new QueryRequest(
+                List.of("customerId", "customer.name"), null, List.of(), new Page(0, 10)));
+
+        assertThat(resolveCalls.get()).isEqualTo(1);
+
+        Map<Object, Object> nameByCustomerId = new java.util.HashMap<>();
+        result.rows().forEach(r -> nameByCustomerId.put(r.get("customerId"), r.get("customer.name")));
+        assertThat(nameByCustomerId)
+                .containsEntry(10L, "Acme")
+                .containsEntry(11L, "Beta")
+                .containsEntry(null, null);
+        assertThat(result.rows().get(0).keySet()).containsExactly("customerId", "customer.name");
+    }
+
+    @Test
     void filterResolvingToNoIdsReturnsZeroRowsAndZeroTotal() {
         QueryResult result = executor.execute(meta, new QueryRequest(
                 List.of("id"),

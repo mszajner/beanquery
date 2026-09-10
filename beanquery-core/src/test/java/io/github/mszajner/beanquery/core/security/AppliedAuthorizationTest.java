@@ -65,6 +65,26 @@ class AppliedAuthorizationTest {
     }
 
     @Test
+    void hidingAReferencesFkIdColumnDropsTheWholeReferenceAndItsSubFields() {
+        FieldMetadata subName = new FieldMetadata("customer.name", "", String.class,
+                true, true, false, null, FieldKind.REFERENCE);
+        FieldMetadata subEmail = new FieldMetadata("customer.email", "", String.class,
+                true, true, false, null, FieldKind.REFERENCE);
+        EntityMetadata meta = new EntityMetadata(
+                "order", Object.class,
+                List.of(field("id", Long.class), field("customerId", Long.class), subName, subEmail),
+                List.of(new ReferenceMetadata("customer", "customerId", List.of("name", "email"))));
+
+        EntityMetadata visible = new AppliedAuthorization(List.of(), Set.of("customerId")).visibleMetadata(meta);
+
+        assertThat(visible.reference("customer")).isEmpty();
+        assertThat(visible.field("customer.name")).isEmpty();
+        assertThat(visible.field("customer.email")).isEmpty();
+        assertThat(visible.field("customerId")).isEmpty();
+        assertThat(visible.field("id")).isPresent();
+    }
+
+    @Test
     void emptyHiddenFieldsPassesMetadataThroughUntouched() {
         EntityMetadata meta = order();
         AppliedAuthorization auth = new AppliedAuthorization(List.of(), Set.of());

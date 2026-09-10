@@ -203,11 +203,22 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
                     "Field '" + field.getName() + "' on " + entityClass.getName()
                             + " has @QueryableReference but no @QueryableField");
         }
+        boolean association = field.isAnnotationPresent(ManyToOne.class) || field.isAnnotationPresent(OneToOne.class);
+        if (association || Collection.class.isAssignableFrom(field.getType())) {
+            throw new QueryableMetadataException(
+                    "@QueryableReference on '" + field.getName() + "' in " + entityClass.getName()
+                            + " must be a scalar foreign-key id column, not an association or collection");
+        }
         String refName = reference.name() == null ? "" : reference.name().trim();
         if (refName.isBlank()) {
             throw new QueryableMetadataException(
                     "@QueryableReference on '" + field.getName() + "' in " + entityClass.getName()
                             + " has a blank name");
+        }
+        if (refName.contains(".")) {
+            throw new QueryableMetadataException(
+                    "@QueryableReference name '" + refName + "' on " + entityClass.getName()
+                            + " must not contain '.'");
         }
         if (reference.fields().length == 0) {
             throw new QueryableMetadataException(

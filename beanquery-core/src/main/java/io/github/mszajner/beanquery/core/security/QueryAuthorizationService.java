@@ -102,6 +102,10 @@ public class QueryAuthorizationService {
             throw configurationError(authorizer, meta, "unknown field '" + filter.field() + "'");
         }
         if (field.kind() == FieldKind.REFERENCE) {
+            if (filter.op() == null) {
+                throw configurationError(authorizer, meta,
+                        "operator must not be null for field '" + filter.field() + "'");
+            }
             // the executor's ReferenceFilterTranslator validates the operator and resolves the value
             return new ResolvedFilterNode.Condition(field, filter.op(), filter.value());
         }

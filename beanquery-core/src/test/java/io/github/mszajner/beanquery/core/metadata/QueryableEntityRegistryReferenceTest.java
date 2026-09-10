@@ -24,6 +24,8 @@ import io.github.mszajner.beanquery.core.annotation.Queryable;
 import io.github.mszajner.beanquery.core.annotation.QueryableField;
 import io.github.mszajner.beanquery.core.annotation.QueryableReference;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.ManyToOne;
+import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -130,6 +132,29 @@ class QueryableEntityRegistryReferenceTest {
     }
 
     @Test
+    void rejectsReferenceOnAnAssociationField() {
+        assertThatThrownBy(() -> registryOf(RefOnAssociation.class))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("customer")
+                .hasMessageContaining("scalar foreign-key id column");
+    }
+
+    @Test
+    void rejectsReferenceOnACollectionField() {
+        assertThatThrownBy(() -> registryOf(RefOnCollection.class))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("scalar foreign-key id column");
+    }
+
+    @Test
+    void rejectsReferenceNameContainingADot() {
+        assertThatThrownBy(() -> registryOf(RefNameWithDot.class))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("a.b")
+                .hasMessageContaining("must not contain");
+    }
+
+    @Test
     void failsFastWhenNoResolverBeanMatches() {
         QueryableEntityRegistry registry =
                 new QueryableEntityRegistry(mock(EntityManagerFactory.class), java.util.Set.of());
@@ -203,6 +228,35 @@ class QueryableEntityRegistryReferenceTest {
         @QueryableReference(name = "customer", fields = {"name"})
         Long customerId;
         @QueryableField String customer;
+    }
+
+    @Queryable(name = "x")
+    static class RefOnAssociation {
+        @QueryableField Long id;
+        @QueryableField(nested = {"name"})
+        @ManyToOne
+        @QueryableReference(name = "customer", fields = {"name"})
+        Target customer;
+
+        static class Target {
+            String name;
+        }
+    }
+
+    @Queryable(name = "x")
+    static class RefOnCollection {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"name"})
+        Collection<Long> customerIds;
+    }
+
+    @Queryable(name = "x")
+    static class RefNameWithDot {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "a.b", fields = {"name"})
+        Long customerId;
     }
 
     @Queryable(name = "x")

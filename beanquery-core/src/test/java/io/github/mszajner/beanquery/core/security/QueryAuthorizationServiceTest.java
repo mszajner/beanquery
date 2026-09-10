@@ -161,6 +161,21 @@ class QueryAuthorizationServiceTest {
     }
 
     @Test
+    void mandatoryReferenceFilterWithNullOperatorIsAConfigurationError(CapturedOutput output) {
+        FieldMetadata refField = new FieldMetadata("customer.tier", "", String.class,
+                true, true, false, Set.of(FilterOperator.EQ), FieldKind.REFERENCE);
+        EntityMetadata meta = new EntityMetadata("order", Object.class, List.of(refField),
+                List.of(new ReferenceMetadata("customer", "customerId", List.of("tier"))));
+        QueryAuthorizer authorizer = authorizer(true, QueryAuthorization.allowWith(
+                new MandatoryFilter("customer.tier", null, "x")));
+
+        assertThatExceptionOfType(QueryAuthorizerConfigurationException.class)
+                .isThrownBy(() -> new QueryAuthorizationService(List.of(authorizer)).authorize(meta, null))
+                .withMessageContaining("operator must not be null for field 'customer.tier'");
+        assertThat(output).contains("operator must not be null for field 'customer.tier'");
+    }
+
+    @Test
     void mandatoryReferenceFilterWithOperatorOutsideMetadataStillPassesThrough() {
         FieldMetadata refField = new FieldMetadata("customer.tier", "", String.class,
                 true, true, false, Set.of(FilterOperator.EQ), FieldKind.REFERENCE);
