@@ -78,6 +78,10 @@ public class DynamicQueryExecutor {
         this.entityManager = Objects.requireNonNull(entityManager, "entityManager");
         this.valueConverter = Objects.requireNonNull(valueConverter, "valueConverter");
         Objects.requireNonNull(referenceResolvers, "referenceResolvers");
+        if (maxReferenceFilterIds < 1) {
+            throw new IllegalArgumentException(
+                    "maxReferenceFilterIds must be >= 1, was " + maxReferenceFilterIds);
+        }
         this.referenceFilterTranslator = new ReferenceFilterTranslator(referenceResolvers, maxReferenceFilterIds);
         this.referenceEnricher = new ReferenceEnricher(referenceResolvers);
     }
