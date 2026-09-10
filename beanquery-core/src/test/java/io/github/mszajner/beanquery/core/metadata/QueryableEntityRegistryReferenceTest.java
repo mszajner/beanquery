@@ -60,6 +60,36 @@ class QueryableEntityRegistryReferenceTest {
     }
 
     @Test
+    void referenceSubFieldsStayNonSortableEvenWhenIdFieldIsSortable() {
+        EntityMetadata e = registryOf(SortableIdReference.class).getRequired("x");
+
+        assertThat(e.field("customerId").orElseThrow().sortable()).isTrue();
+        assertThat(e.field("customer.name").orElseThrow().sortable()).isFalse();
+    }
+
+    @Test
+    void declaredOperatorsPathAddsOnlyIsNullAndIsNotNull() {
+        EntityMetadata e = registryOf(DeclaredOperatorsReference.class).getRequired("x");
+
+        assertThat(e.field("customer.name").orElseThrow().allowedOperators())
+                .containsExactlyInAnyOrder(FilterOperator.EQ, FilterOperator.ILIKE,
+                        FilterOperator.IS_NULL, FilterOperator.IS_NOT_NULL);
+    }
+
+    @Test
+    void defaultOperatorsPathIsReferenceDefaultPlusNullChecks() {
+        EntityMetadata e = registryOf(OrderModel.class).getRequired("order");
+
+        java.util.EnumSet<FilterOperator> expected =
+                java.util.EnumSet.copyOf(DefaultOperators.referenceDefault());
+        expected.add(FilterOperator.IS_NULL);
+        expected.add(FilterOperator.IS_NOT_NULL);
+
+        assertThat(e.field("customer.name").orElseThrow().allowedOperators())
+                .containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Test
     void rejectsReferenceWithoutQueryableField() {
         assertThatThrownBy(() -> registryOf(RefWithoutQueryableField.class))
                 .isInstanceOf(QueryableMetadataException.class)
@@ -67,8 +97,34 @@ class QueryableEntityRegistryReferenceTest {
     }
 
     @Test
+    void rejectsReferenceWithNoFields() {
+        assertThatThrownBy(() -> registryOf(RefWithNoFields.class))
+                .isInstanceOf(QueryableMetadataException.class);
+    }
+
+    @Test
+    void rejectsReferenceSubFieldContainingDot() {
+        assertThatThrownBy(() -> registryOf(RefWithDottedSubField.class))
+                .isInstanceOf(QueryableMetadataException.class);
+    }
+
+    @Test
     void rejectsReferenceNameCollidingWithAField() {
         assertThatThrownBy(() -> registryOf(RefNameCollision.class))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("customer");
+    }
+
+    @Test
+    void rejectsReferenceNameCollidingWithAFieldDeclaredAfterTheReference() {
+        assertThatThrownBy(() -> registryOf(RefNameCollisionColumnAfter.class))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("customer");
+    }
+
+    @Test
+    void rejectsTwoReferencesSharingAName() {
+        assertThatThrownBy(() -> registryOf(DuplicateReferenceName.class))
                 .isInstanceOf(QueryableMetadataException.class)
                 .hasMessageContaining("customer");
     }
@@ -82,9 +138,42 @@ class QueryableEntityRegistryReferenceTest {
     }
 
     @Queryable(name = "x")
+    static class SortableIdReference {
+        @QueryableField Long id;
+        @QueryableField(sortable = true)
+        @QueryableReference(name = "customer", fields = {"name"})
+        Long customerId;
+    }
+
+    @Queryable(name = "x")
+    static class DeclaredOperatorsReference {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"name"},
+                operators = {FilterOperator.EQ, FilterOperator.ILIKE})
+        Long customerId;
+    }
+
+    @Queryable(name = "x")
     static class RefWithoutQueryableField {
         @QueryableField Long id;
         @QueryableReference(name = "customer", fields = {"name"})
+        Long customerId;
+    }
+
+    @Queryable(name = "x")
+    static class RefWithNoFields {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {})
+        Long customerId;
+    }
+
+    @Queryable(name = "x")
+    static class RefWithDottedSubField {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"address.city"})
         Long customerId;
     }
 
@@ -95,5 +184,25 @@ class QueryableEntityRegistryReferenceTest {
         @QueryableField
         @QueryableReference(name = "customer", fields = {"name"})
         Long customerId;
+    }
+
+    @Queryable(name = "x")
+    static class RefNameCollisionColumnAfter {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"name"})
+        Long customerId;
+        @QueryableField String customer;
+    }
+
+    @Queryable(name = "x")
+    static class DuplicateReferenceName {
+        @QueryableField Long id;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"name"})
+        Long customerId;
+        @QueryableField
+        @QueryableReference(name = "customer", fields = {"tier"})
+        Long customerRef;
     }
 }

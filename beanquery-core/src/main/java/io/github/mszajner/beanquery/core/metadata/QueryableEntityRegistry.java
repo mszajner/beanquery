@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,9 +142,24 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
                 }
             }
             if (reference != null) {
-                references.add(buildReference(entityClass, field, reference, fields));
+                references.add(buildReference(entityClass, field, reference));
             }
         });
+
+        // reference collisions are checked here, after ALL fields and references are collected,
+        // so the outcome does not depend on the textual order of declarations
+        Set<String> referenceNames = new LinkedHashSet<>();
+        for (ReferenceMetadata ref : references) {
+            if (!referenceNames.add(ref.name())) {
+                throw new QueryableMetadataException(
+                        "Duplicate @QueryableReference name '" + ref.name() + "' on " + entityClass.getName());
+            }
+            if (fields.containsKey(ref.name())) {
+                throw new QueryableMetadataException(
+                        "@QueryableReference name '" + ref.name() + "' on " + entityClass.getName()
+                                + " collides with a field of the same name");
+            }
+        }
 
         // reference sub-fields are added after all column/joined fields so collisions are detected either way
         for (ReferenceMetadata ref : references) {
@@ -166,7 +182,7 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
     }
 
     private static ReferenceMetadata buildReference(Class<?> entityClass, Field field,
-            QueryableReference reference, Map<String, FieldMetadata> columnFields) {
+            QueryableReference reference) {
 
         if (field.getAnnotation(QueryableField.class) == null) {
             throw new QueryableMetadataException(
@@ -191,11 +207,6 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
                                 + " has an invalid sub-field '" + sub + "'");
             }
             subs.add(sub.trim());
-        }
-        if (columnFields.containsKey(refName)) {
-            throw new QueryableMetadataException(
-                    "@QueryableReference name '" + refName + "' on " + entityClass.getName()
-                            + " collides with a field of the same name");
         }
         return new ReferenceMetadata(refName, field.getName(), subs);
     }
