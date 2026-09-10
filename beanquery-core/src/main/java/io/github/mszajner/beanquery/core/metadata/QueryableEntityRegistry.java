@@ -179,7 +179,8 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
                     annotation.selectable(),
                     annotation.filterable(),
                     annotation.sortable(),
-                    resolveOperators(annotation, subField.getType())));
+                    resolveOperators(annotation, subField.getType()),
+                    FieldKind.JOINED));
         }
         return nestedFields;
     }
@@ -192,7 +193,8 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
                 annotation.selectable(),
                 annotation.filterable(),
                 annotation.sortable(),
-                resolveOperators(annotation, field.getType()));
+                resolveOperators(annotation, field.getType()),
+                FieldKind.COLUMN);
     }
 
     private static Set<FilterOperator> resolveOperators(QueryableField annotation, Class<?> javaType) {

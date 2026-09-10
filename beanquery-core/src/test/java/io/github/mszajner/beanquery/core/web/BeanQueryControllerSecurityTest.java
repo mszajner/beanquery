@@ -42,6 +42,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
 import io.github.mszajner.beanquery.core.metadata.QueryableEntityRegistry;
@@ -164,7 +165,7 @@ class BeanQueryControllerSecurityTest {
     }
 
     private static FieldMetadata field(String name, Class<?> type) {
-        return new FieldMetadata(name, name, type, true, true, true, DefaultOperators.forType(type));
+        return new FieldMetadata(name, name, type, true, true, true, DefaultOperators.forType(type), FieldKind.COLUMN);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.entry;
 
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
 import io.github.mszajner.beanquery.core.query.DynamicQueryExecutor;
@@ -463,7 +464,7 @@ class DynamicQueryExecutorIT {
     }
 
     private static FieldMetadata fld(String name, String path, Class<?> type) {
-        return new FieldMetadata(name, path, type, true, true, true, DefaultOperators.forType(type));
+        return new FieldMetadata(name, path, type, true, true, true, DefaultOperators.forType(type), FieldKind.COLUMN);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

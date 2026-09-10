@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.QueryableEntityRegistry;
 import io.github.mszajner.beanquery.core.metadata.UnknownEntityException;
@@ -70,7 +71,7 @@ class BeanQueryControllerTest {
             field("createdAt", java.time.Instant.class, true, true, true),
             field("secret", String.class, false, false, false),
             new FieldMetadata("customer.name", "customer.name", String.class, true, false, true,
-                    DefaultOperators.forType(String.class))));
+                    DefaultOperators.forType(String.class), FieldKind.JOINED)));
 
     @Autowired
     private MockMvc mvc;
@@ -187,7 +188,7 @@ class BeanQueryControllerTest {
             boolean selectable, boolean filterable, boolean sortable) {
         Set<io.github.mszajner.beanquery.core.metadata.FilterOperator> ops = DefaultOperators.forType(type);
         return new FieldMetadata(name, name, type, selectable, filterable, sortable,
-                ops.isEmpty() ? Set.of() : ops);
+                ops.isEmpty() ? Set.of() : ops, FieldKind.COLUMN);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

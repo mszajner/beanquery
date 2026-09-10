@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
 import java.math.BigDecimal;
@@ -551,6 +552,6 @@ class QueryRequestValidatorTest {
         Set<FilterOperator> ops = operators.length == 0
                 ? Set.of()
                 : EnumSet.copyOf(Arrays.asList(operators));
-        return new FieldMetadata(name, name, type, selectable, filterable, sortable, ops);
+        return new FieldMetadata(name, name, type, selectable, filterable, sortable, ops, FieldKind.COLUMN);
     }
 }
