@@ -93,7 +93,21 @@ public class QueryableEntityRegistry implements SmartInitializingSingleton {
 
     /** Package-private entry point so the build/validation logic is unit-testable without JPA. */
     void initialize(Collection<Class<?>> candidateEntityClasses) {
-        this.entitiesByName = Collections.unmodifiableMap(scan(candidateEntityClasses));
+        Map<String, EntityMetadata> scanned = scan(candidateEntityClasses);
+        verifyReferenceResolvers(scanned);
+        this.entitiesByName = Collections.unmodifiableMap(scanned);
+    }
+
+    private void verifyReferenceResolvers(Map<String, EntityMetadata> scanned) {
+        for (EntityMetadata meta : scanned.values()) {
+            for (ReferenceMetadata ref : meta.references()) {
+                if (!availableReferenceResolverNames.contains(ref.name())) {
+                    throw new QueryableMetadataException(
+                            "Entity '" + meta.name() + "' declares @QueryableReference '" + ref.name()
+                                    + "' but no ReferenceResolver bean has referenceName() == '" + ref.name() + "'");
+                }
+            }
+        }
     }
 
     private Collection<Class<?>> managedEntityClasses() {

@@ -129,6 +129,16 @@ class QueryableEntityRegistryReferenceTest {
                 .hasMessageContaining("customer");
     }
 
+    @Test
+    void failsFastWhenNoResolverBeanMatches() {
+        QueryableEntityRegistry registry =
+                new QueryableEntityRegistry(mock(EntityManagerFactory.class), java.util.Set.of());
+        assertThatThrownBy(() -> registry.initialize(List.of(OrderModel.class)))
+                .isInstanceOf(QueryableMetadataException.class)
+                .hasMessageContaining("order")
+                .hasMessageContaining("customer");
+    }
+
     @Queryable(name = "order")
     static class OrderModel {
         @QueryableField Long id;
