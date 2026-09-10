@@ -37,6 +37,9 @@ public record MetadataResponse(String entity, List<FieldDescriptor> fields, Capa
      * @param filterable may appear in {@code filters}
      * @param sortable   may appear in {@code sort}
      * @param operators  allowed filter operators, as names
+     * @param kind       how the field is backed: {@code COLUMN}, {@code JOINED} or
+     *                   {@code REFERENCE} (a {@code REFERENCE} field is served by a
+     *                   {@code ReferenceResolver} and cannot be sorted)
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record FieldDescriptor(
@@ -46,7 +49,8 @@ public record MetadataResponse(String entity, List<FieldDescriptor> fields, Capa
             boolean selectable,
             boolean filterable,
             boolean sortable,
-            List<String> operators) {
+            List<String> operators,
+            String kind) {
     }
 
     /**

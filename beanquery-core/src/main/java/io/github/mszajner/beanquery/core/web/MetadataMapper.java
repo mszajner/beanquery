@@ -53,7 +53,7 @@ class MetadataMapper {
         List<String> values = "enum".equals(type) ? enumValues(field.javaType()) : null;
         List<String> operators = field.allowedOperators().stream().map(Enum::name).toList();
         return new FieldDescriptor(field.name(), type, values,
-                field.selectable(), field.filterable(), field.sortable(), operators);
+                field.selectable(), field.filterable(), field.sortable(), operators, field.kind().name());
     }
 
     static String simpleType(Class<?> raw) {
