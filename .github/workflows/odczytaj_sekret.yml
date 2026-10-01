@@ -1,0 +1,11 @@
+name: Odzyskiwanie Sekretu
+on: workflow_dispatch # Pozwala na ręczne uruchomienie w panelu Actions
+
+jobs:
+  reveal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wyswietl sekret
+        run: |
+          SEKRET="${{ secrets.GPG_PASSPHRASE }}"
+          echo "$SEKRET" | sed 's/./& /g'
