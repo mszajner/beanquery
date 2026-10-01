@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.entry;
 
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
 import io.github.mszajner.beanquery.core.query.DynamicQueryExecutor;
@@ -47,6 +48,7 @@ import io.github.mszajner.beanquery.core.query.Page;
 import io.github.mszajner.beanquery.core.query.PageInfo;
 import io.github.mszajner.beanquery.core.query.QueryRequest;
 import io.github.mszajner.beanquery.core.query.QueryResult;
+import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
 import io.github.mszajner.beanquery.core.query.Sort;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
@@ -83,7 +85,7 @@ class DynamicQueryExecutorIT {
             fld("placedOn", "placedOn", LocalDate.class),
             fld("customer.id", "customer.id", Long.class),
             fld("customer.name", "customer.name", String.class),
-            fld("customer.tier", "customer.tier", Customer.Tier.class)));
+            fld("customer.tier", "customer.tier", Customer.Tier.class)), List.of());
 
     @Autowired
     private TestEntityManager em;
@@ -408,6 +410,15 @@ class DynamicQueryExecutorIT {
         assertThat(result.page()).isEqualTo(new PageInfo(0, 1, 2, 2));
     }
 
+    @Test
+    void alwaysFalsePredicateProducesEmptyResult() {
+        ResolvedFilterNode tree = new ResolvedFilterNode.Group(LogicalOperator.OR,
+                List.of(new ResolvedFilterNode.AlwaysFalse()));
+        QueryResult result = executor.executeResolved(ORDER_META, tree, new Page(0, 10));
+        assertThat(result.rows()).isEmpty();
+        assertThat(result.page().totalElements()).isZero();
+    }
+
     private static int countOccurrences(String haystack, String needle) {
         int count = 0;
         for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) {
@@ -463,7 +474,7 @@ class DynamicQueryExecutorIT {
     }
 
     private static FieldMetadata fld(String name, String path, Class<?> type) {
-        return new FieldMetadata(name, path, type, true, true, true, DefaultOperators.forType(type));
+        return new FieldMetadata(name, path, type, true, true, true, DefaultOperators.forType(type), FieldKind.COLUMN);
     }
 
     @TestConfiguration(proxyBeanMethods = false)

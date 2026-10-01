@@ -25,7 +25,8 @@ import java.util.List;
  * field and converted its value to the target Java type. The executor builds
  * predicates from this and never touches {@code JsonNode}.
  */
-public sealed interface ResolvedFilterNode permits ResolvedFilterNode.Condition, ResolvedFilterNode.Group {
+public sealed interface ResolvedFilterNode
+        permits ResolvedFilterNode.Condition, ResolvedFilterNode.Group, ResolvedFilterNode.AlwaysFalse {
 
     /**
      * A resolved leaf.
@@ -41,5 +42,9 @@ public sealed interface ResolvedFilterNode permits ResolvedFilterNode.Condition,
 
     /** A resolved group. */
     record Group(LogicalOperator logic, List<ResolvedFilterNode> children) implements ResolvedFilterNode {
+    }
+
+    /** A predicate that never matches - used when a reference filter resolves to no ids. */
+    record AlwaysFalse() implements ResolvedFilterNode {
     }
 }

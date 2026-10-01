@@ -27,8 +27,10 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import io.github.mszajner.beanquery.core.metadata.DefaultOperators;
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
+import io.github.mszajner.beanquery.core.metadata.ReferenceMetadata;
 import io.github.mszajner.beanquery.core.query.ResolvedFilterNode;
 
 @ExtendWith(OutputCaptureExtension.class)
@@ -38,7 +40,7 @@ class QueryAuthorizationServiceTest {
             field("id", Long.class),
             field("status", String.class),
             field("tenantId", String.class),
-            field("region", String.class)));
+            field("region", String.class)), List.of());
 
     private AppliedAuthorization authorize(List<QueryAuthorizer> authorizers) {
         return new QueryAuthorizationService(authorizers).authorize(ORDER, null);
@@ -136,6 +138,62 @@ class QueryAuthorizationServiceTest {
         assertThat(output).contains("hides field 'ghost'").contains("not registered");
     }
 
+    @Test
+    void mandatoryFilterOnAReferenceFieldIsPassedThroughUnresolved() {
+        FieldMetadata refField = new FieldMetadata("customer.tier", "", String.class,
+                true, true, false,
+                Set.of(FilterOperator.EQ, FilterOperator.IS_NULL), FieldKind.REFERENCE);
+        EntityMetadata meta = new EntityMetadata("order", Object.class, List.of(refField),
+                List.of(new ReferenceMetadata("customer", "customerId", List.of("tier"))));
+
+        QueryAuthorizer authorizer = authorizer(true, QueryAuthorization.allowWith(
+                new MandatoryFilter("customer.tier", FilterOperator.EQ, "gold")));
+
+        AppliedAuthorization applied = new QueryAuthorizationService(List.of(authorizer)).authorize(meta, null);
+
+        assertThat(applied.mandatoryPredicates()).singleElement()
+                .isInstanceOfSatisfying(ResolvedFilterNode.Condition.class, c -> {
+                    assertThat(c.field().name()).isEqualTo("customer.tier");
+                    assertThat(c.field().kind()).isEqualTo(FieldKind.REFERENCE);
+                    assertThat(c.op()).isEqualTo(FilterOperator.EQ);
+                    assertThat(c.value()).isEqualTo("gold");
+                });
+    }
+
+    @Test
+    void mandatoryReferenceFilterWithNullOperatorIsAConfigurationError(CapturedOutput output) {
+        FieldMetadata refField = new FieldMetadata("customer.tier", "", String.class,
+                true, true, false, Set.of(FilterOperator.EQ), FieldKind.REFERENCE);
+        EntityMetadata meta = new EntityMetadata("order", Object.class, List.of(refField),
+                List.of(new ReferenceMetadata("customer", "customerId", List.of("tier"))));
+        QueryAuthorizer authorizer = authorizer(true, QueryAuthorization.allowWith(
+                new MandatoryFilter("customer.tier", null, "x")));
+
+        assertThatExceptionOfType(QueryAuthorizerConfigurationException.class)
+                .isThrownBy(() -> new QueryAuthorizationService(List.of(authorizer)).authorize(meta, null))
+                .withMessageContaining("operator must not be null for field 'customer.tier'");
+        assertThat(output).contains("operator must not be null for field 'customer.tier'");
+    }
+
+    @Test
+    void mandatoryReferenceFilterWithOperatorOutsideMetadataStillPassesThrough() {
+        FieldMetadata refField = new FieldMetadata("customer.tier", "", String.class,
+                true, true, false, Set.of(FilterOperator.EQ), FieldKind.REFERENCE);
+        EntityMetadata meta = new EntityMetadata("order", Object.class, List.of(refField),
+                List.of(new ReferenceMetadata("customer", "customerId", List.of("tier"))));
+        QueryAuthorizer authorizer = authorizer(true, QueryAuthorization.allowWith(
+                new MandatoryFilter("customer.tier", FilterOperator.ILIKE, "go")));
+
+        AppliedAuthorization applied = new QueryAuthorizationService(List.of(authorizer)).authorize(meta, null);
+
+        assertThat(applied.mandatoryPredicates()).singleElement()
+                .isInstanceOfSatisfying(ResolvedFilterNode.Condition.class, c -> {
+                    assertThat(c.field().name()).isEqualTo("customer.tier");
+                    assertThat(c.op()).isEqualTo(FilterOperator.ILIKE);
+                    assertThat(c.value()).isEqualTo("go");
+                });
+    }
+
     // -- helpers -------------------------------------------------------
 
     private static ResolvedFilterNode.Condition condition(AppliedAuthorization applied, int index) {
@@ -157,6 +215,6 @@ class QueryAuthorizationServiceTest {
     }
 
     private static FieldMetadata field(String name, Class<?> type) {
-        return new FieldMetadata(name, name, type, true, true, true, DefaultOperators.forType(type));
+        return new FieldMetadata(name, name, type, true, true, true, DefaultOperators.forType(type), FieldKind.COLUMN);
     }
 }

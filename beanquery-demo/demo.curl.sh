@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# AND/OR filter-tree examples for the beanquery demo, for people without IntelliJ.
-# Same cases (b-e) as the "Filtry AND/OR (drzewo)" section of demo.http.
+# AND/OR filter-tree and cross-module reference examples for the beanquery demo,
+# for people without IntelliJ. Mirrors the "Filtry AND/OR (drzewo)" (b-e) and
+# "Referencje między modułami" (ref-1..ref-5) sections of demo.http.
 #
 # Usage:
 #   mvn -pl beanquery-demo spring-boot:run      # in another terminal
@@ -15,6 +16,12 @@ BASE="${BASE:-http://localhost:8080/api/bq}"
 
 query() {
   curl -sS -X POST "$BASE/product/query" \
+    -H 'Content-Type: application/json' \
+    -d "$1"
+}
+
+order_query() {
+  curl -sS -X POST "$BASE/order/query" \
     -H 'Content-Type: application/json' \
     -d "$1"
 }
@@ -91,5 +98,61 @@ query '{
   "sort": [{ "field": "id", "direction": "ASC" }],
   "page": { "number": 0, "size": 100 }
 }' | jq '{total: .page.totalElements, noCategory: [.rows[] | select(.["category.name"] == null) | {id, name}]}'
+
+# --- Referencje między modułami (order.customer.* via ReferenceResolver) ------
+# Moduł "order" trzyma tylko customer_id; nazwę/tier dostarcza moduł "customer"
+# (tabela customer, czytana JdbcTemplate). Seed: 4 klientów (1 Acme Corp/gold,
+# 2 Beta Industries/silver, 3 Ceres Ltd/gold, 4 Delta LLC/bronze) i 10 zamówień -
+# id 8, 9 mają customer_id NULL, id 10 wskazuje na nieistniejącego klienta (99).
+
+hr
+echo "ref-1) Select z polami referencyjnymi - jedno batchowe resolve() na stronę."
+echo "   id 1/2 -> 'Acme Corp'; id 8/9 -> null (NULL customer_id); id 10 -> null (99 nie istnieje)."
+order_query '{
+  "select": ["id", "status", "total", "customer.name", "customer.tier"],
+  "sort": [{ "field": "id", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}' | jq '{total: .page.totalElements, rows: [.rows[] | {id, status, name: .["customer.name"], tier: .["customer.tier"]}]}'
+
+hr
+echo "ref-2) Filtr po polu referencyjnym -> resolveFilter() -> customer_id IN (...)."
+echo "   'acme' pasuje do klienta 1 -> zamówienia 1 i 2. Oczekiwane: total 2."
+order_query '{
+  "select": ["id", "customer.name"],
+  "filters": { "field": "customer.name", "op": "ILIKE", "value": "acme" },
+  "page": { "number": 0, "size": 50 }
+}' | jq '{total: .page.totalElements, ids: [.rows[].id]}'
+
+hr
+echo "ref-3) Filtr, który nie pasuje do nikogo -> 0 wierszy, totalElements 0 (NIE wszystkie!)."
+echo "   Pusta rozdzielczość referencji = warunek zawsze fałszywy, nie 'brak filtra'."
+order_query '{
+  "select": ["id"],
+  "filters": { "field": "customer.name", "op": "ILIKE", "value": "nobody" },
+  "page": { "number": 0, "size": 50 }
+}' | jq '{total: .page.totalElements, ids: [.rows[].id]}'
+
+hr
+echo "ref-4) Filtr referencyjny w gałęzi OR - przetłumaczone IN wstawione tylko tam."
+echo "   (customer.name ILIKE 'acme' -> {1,2}) OR (status = 'NEW' -> {1,3,6,8}) -> {1,2,3,6,8} = 5."
+order_query '{
+  "select": ["id", "status", "customer.name"],
+  "filters": { "logic": "or", "children": [
+    { "field": "customer.name", "op": "ILIKE", "value": "acme" },
+    { "field": "status", "op": "EQ", "value": "NEW" }
+  ] },
+  "sort": [{ "field": "id", "direction": "ASC" }],
+  "page": { "number": 0, "size": 50 }
+}' | jq '{total: .page.totalElements, rows: [.rows[] | {id, status, name: .["customer.name"]}]}'
+
+hr
+echo "ref-5) 400 - sortowanie po polu referencyjnym jest niedozwolone."
+curl -sS -o /dev/null -w 'HTTP %{http_code}\n' -X POST "$BASE/order/query" \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "select": ["id"],
+  "sort": [{ "field": "customer.name", "direction": "ASC" }],
+  "page": { "number": 0, "size": 10 }
+}'
 
 hr

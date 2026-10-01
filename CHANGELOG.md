@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `@QueryableReference` + the `ReferenceResolver` SPI: expose fields of another
+  Spring Modulith module's entity via a runtime resolver instead of a JPA
+  association. Reference sub-fields are selectable and filterable (the resolver
+  translates a filter clause to a local `id IN (…)`), never sortable. New
+  property `beanquery.max-reference-filter-ids` (default 1000) caps that id set.
+
 ## [0.1.0] - 2026-09-09
 
 ### Added

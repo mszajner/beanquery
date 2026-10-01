@@ -22,6 +22,7 @@ beanquery:
   base-path: /api/bq
   max-page-size: 200
   default-page-size: 20
+  max-reference-filter-ids: 1000
 
 logging:
   level:

@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import io.github.mszajner.beanquery.core.metadata.EntityMetadata;
+import io.github.mszajner.beanquery.core.metadata.FieldKind;
 import io.github.mszajner.beanquery.core.metadata.FieldMetadata;
 import io.github.mszajner.beanquery.core.metadata.FilterOperator;
 import java.math.BigDecimal;
@@ -71,7 +72,7 @@ class QueryRequestValidatorTest {
                     EQ, NE, GT, GTE, LT, LTE, BETWEEN, IN, IS_NULL, IS_NOT_NULL),
             field("secret", String.class, false, false, false),
             field("label", String.class, true, false, true, EQ, NE),
-            field("rank", Integer.class, true, true, false, EQ, NE, GT, LT)));
+            field("rank", Integer.class, true, true, false, EQ, NE, GT, LT)), List.of());
 
     private final QueryRequestValidator validator =
             new QueryRequestValidator(MAX_PAGE_SIZE, MAX_DEPTH, MAX_CONDITIONS);
@@ -551,6 +552,6 @@ class QueryRequestValidatorTest {
         Set<FilterOperator> ops = operators.length == 0
                 ? Set.of()
                 : EnumSet.copyOf(Arrays.asList(operators));
-        return new FieldMetadata(name, name, type, selectable, filterable, sortable, ops);
+        return new FieldMetadata(name, name, type, selectable, filterable, sortable, ops, FieldKind.COLUMN);
     }
 }

@@ -14,39 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.mszajner.beanquery.demo;
+package io.github.mszajner.beanquery.core.executor;
 
-import io.github.mszajner.beanquery.core.annotation.Queryable;
-import io.github.mszajner.beanquery.core.annotation.QueryableField;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 @Entity
-@Queryable(name = "category")
-public class Category {
+public class RefOrder {
 
     @Id
-    @QueryableField
     private Long id;
+    private Long customerId;
 
-    @QueryableField
-    private String name;
+    protected RefOrder() {
+    }
 
-    @QueryableField
-    private boolean active;
-
-    protected Category() {
+    public RefOrder(Long id, Long customerId) {
+        this.id = id;
+        this.customerId = customerId;
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public boolean isActive() {
-        return active;
+    public Long getCustomerId() {
+        return customerId;
     }
 }

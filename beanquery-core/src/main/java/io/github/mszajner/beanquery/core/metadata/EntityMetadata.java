@@ -29,16 +29,19 @@ import java.util.Optional;
  * @param name        URL identifier ({@code /api/bq/{name}/...})
  * @param entityClass the JPA entity class
  * @param fields      registered fields, in registration order
+ * @param references  registered {@code @QueryableReference} links, in registration order
  */
 public record EntityMetadata(
         String name,
         Class<?> entityClass,
-        List<FieldMetadata> fields) {
+        List<FieldMetadata> fields,
+        List<ReferenceMetadata> references) {
 
     public EntityMetadata {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(entityClass, "entityClass");
         fields = List.copyOf(fields);
+        references = List.copyOf(references);
     }
 
     /** Look up a registered field by its logical name. */
@@ -53,5 +56,19 @@ public record EntityMetadata(
             map.put(f.name(), f);
         }
         return map;
+    }
+
+    /** Look up a registered reference by its name. */
+    public Optional<ReferenceMetadata> reference(String referenceName) {
+        return references.stream().filter(r -> r.name().equals(referenceName)).findFirst();
+    }
+
+    /**
+     * Look up the reference addressed by a dotted field name
+     * ({@code "customer.name"} &rarr; the {@code "customer"} reference).
+     */
+    public Optional<ReferenceMetadata> referenceForField(String fieldName) {
+        int dot = fieldName.indexOf('.');
+        return dot < 0 ? Optional.empty() : reference(fieldName.substring(0, dot));
     }
 }
