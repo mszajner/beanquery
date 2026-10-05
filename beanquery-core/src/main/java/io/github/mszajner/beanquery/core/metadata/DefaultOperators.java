@@ -69,6 +69,9 @@ public final class DefaultOperators {
     private static final Set<FilterOperator> ENUM_OPERATORS =
             immutable(EQ, NE, IN, NOT_IN, IS_NULL, IS_NOT_NULL);
 
+    private static final Set<FilterOperator> REFERENCE_OPERATORS =
+            immutable(EQ, NE, IN, NOT_IN, LIKE, ILIKE);
+
     private static final Set<FilterOperator> NO_OPERATORS =
             Collections.unmodifiableSet(EnumSet.noneOf(FilterOperator.class));
 
@@ -112,6 +115,11 @@ public final class DefaultOperators {
             return ENUM_OPERATORS;
         }
         return NO_OPERATORS;
+    }
+
+    /** Operators advertised for a reference sub-field when the annotation lists none. */
+    public static Set<FilterOperator> referenceDefault() {
+        return REFERENCE_OPERATORS;
     }
 
     private static Set<FilterOperator> immutable(FilterOperator... operators) {

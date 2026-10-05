@@ -51,6 +51,7 @@ class BeanQueryAutoConfigurationTest {
                 .hasSingleBean(FilterValueConverter.class)
                 .hasSingleBean(QueryRequestValidator.class)
                 .hasSingleBean(DynamicQueryExecutor.class)
+                .hasSingleBean(io.github.mszajner.beanquery.core.reference.ReferenceResolvers.class)
                 .hasSingleBean(QueryAuthorizationService.class)
                 .hasSingleBean(BeanQueryController.class)
                 .hasSingleBean(BeanQueryExceptionHandler.class));
@@ -86,6 +87,20 @@ class BeanQueryAutoConfigurationTest {
             assertThat(validator.getMaxFilterDepth()).isEqualTo(2);
             assertThat(validator.getMaxFilterConditions()).isEqualTo(7);
         });
+    }
+
+    @Test
+    void referenceFilterIdLimitDefaultsAndIsOverridable() {
+        runner.run(context ->
+                assertThat(context.getBean(BeanQueryProperties.class).getMaxReferenceFilterIds()).isEqualTo(1000));
+        runner.withPropertyValues("beanquery.max-reference-filter-ids=25").run(context ->
+                assertThat(context.getBean(BeanQueryProperties.class).getMaxReferenceFilterIds()).isEqualTo(25));
+    }
+
+    @Test
+    void referenceResolversBeanIsRegistered() {
+        runner.run(context -> assertThat(context).hasSingleBean(
+                io.github.mszajner.beanquery.core.reference.ReferenceResolvers.class));
     }
 
     @Test
