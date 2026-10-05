@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="beanquery">
+<title>beanquery</title>
+<g>
+  <g transform="rotate(-40 54 54)">
+    <ellipse cx="54" cy="54" rx="45" ry="39" fill="#6DB33F"/>
+    <path d="M20 56C38 38 46 70 64 50C70 43 80 46 88 50" fill="none" stroke="#3F7D1F" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g stroke="#fff" stroke-linecap="round" fill="none"><circle cx="84" cy="84" r="24" stroke-width="15"/><path d="M101 101L117 117" stroke-width="17"/></g>
+  <circle cx="84" cy="84" r="24" fill="#E3F4D3" fill-opacity=".55"/>
+  <g stroke="#24292F" stroke-linecap="round" fill="none"><circle cx="84" cy="84" r="24" stroke-width="8"/><path d="M101 101L117 117" stroke-width="10"/></g>
+</g>
+</svg>

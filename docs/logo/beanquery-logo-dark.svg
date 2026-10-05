@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 128" width="660" height="128" role="img" aria-label="beanquery">
+<title>beanquery</title>
+<g>
+  <g transform="rotate(-40 54 54)">
+    <ellipse cx="54" cy="54" rx="45" ry="39" fill="#6DB33F"/>
+    <path d="M20 56C38 38 46 70 64 50C70 43 80 46 88 50" fill="none" stroke="#3F7D1F" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <circle cx="84" cy="84" r="24" fill="#E3F4D3" fill-opacity=".55"/>
+  <g stroke="#F0F6FC" stroke-linecap="round" fill="none"><circle cx="84" cy="84" r="24" stroke-width="8"/><path d="M101 101L117 117" stroke-width="10"/></g>
+</g>
+<g transform="translate(160 41.6) scale(1.6)" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path transform="translate(0 0)" d="M4 -12V28M14 4A10 10 0 1 1 13.99 4" stroke="#F0F6FC"/>
+    <path transform="translate(34 0)" d="M4 14H24A10 10 0 1 0 21.07 21.07" stroke="#F0F6FC"/>
+    <path transform="translate(68 0)" d="M14 4A10 10 0 1 0 14.01 4M24 4V28" stroke="#F0F6FC"/>
+    <path transform="translate(102 0)" d="M4 4V28M4 14A10 10 0 0 1 24 14V28" stroke="#F0F6FC"/>
+    <path transform="translate(136 0)" d="M14 4A10 10 0 1 0 14.01 4M24 4V40" stroke="#8CCB5E"/>
+    <path transform="translate(170 0)" d="M4 4V18A10 10 0 0 0 24 18M24 4V28" stroke="#8CCB5E"/>
+    <path transform="translate(204 0)" d="M4 14H24A10 10 0 1 0 21.07 21.07" stroke="#8CCB5E"/>
+    <path transform="translate(238 0)" d="M4 4V28M4 16A12 12 0 0 1 16 4" stroke="#8CCB5E"/>
+    <path transform="translate(266 0)" d="M4 4L14 28M24 4L8 40" stroke="#8CCB5E"/>
+    </g>
+</svg>
