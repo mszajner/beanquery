@@ -36,7 +36,7 @@ Requires a full JDK 17–21 (`JAVA_HOME` must point at a JDK, not a JRE).
 
 ## Reporting security issues
 
-Do **not** open a public issue. Email <mszajner@rexoft.pl>.
+Do **not** open a public issue. Email <mirek@mirekszajner.com>.
 
 ## Licensing
 

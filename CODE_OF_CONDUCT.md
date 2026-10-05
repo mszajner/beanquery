@@ -6,5 +6,5 @@ version 2.1.
 In short: be respectful, assume good faith, and keep discussion technical and
 constructive. Harassment or discrimination of any kind is not tolerated.
 
-Report unacceptable behaviour to <mszajner@rexoft.pl>. Reports are handled
+Report unacceptable behaviour to <mirek@mirekszajner.com>. Reports are handled
 confidentially.

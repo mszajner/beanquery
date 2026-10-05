@@ -5,7 +5,7 @@
 Please report security vulnerabilities privately — **do not open a public issue**.
 
 - Preferred: [GitHub private vulnerability reporting](https://github.com/mszajner/beanquery/security/advisories/new)
-- Or email <mszajner@rexoft.pl>
+- Or email <mirek@mirekszajner.com>
 
 You'll get an acknowledgement within a few working days. Once a fix is ready
 we'll coordinate a release and a disclosure timeline with you.

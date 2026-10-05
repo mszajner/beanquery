@@ -1,4 +1,9 @@
-# beanquery
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo/beanquery-logo-dark.svg">
+    <img src="docs/logo/beanquery-logo.svg" alt="beanquery" width="420">
+  </picture>
+</p>
 
 [![CI](https://github.com/mszajner/beanquery/actions/workflows/ci.yml/badge.svg)](https://github.com/mszajner/beanquery/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.mszajner/beanquery-starter.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.mszajner/beanquery-starter)
