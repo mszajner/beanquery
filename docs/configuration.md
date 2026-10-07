@@ -1,5 +1,6 @@
 ---
 title: Configuration and extension
+permalink: /configuration/
 ---
 
 ## `beanquery.*` properties

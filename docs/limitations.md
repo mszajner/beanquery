@@ -1,5 +1,6 @@
 ---
 title: Limitations and roadmap
+permalink: /limitations/
 ---
 
 Below is what the library **does not do today** - important when judging whether it fits your case.

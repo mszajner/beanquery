@@ -1,5 +1,6 @@
 ---
 title: Client integration
+permalink: /client/
 ---
 
 The `/metadata` endpoint lets a client (React, Angular, Vue, a mobile app...) **avoid hard-coding**

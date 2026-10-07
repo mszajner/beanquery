@@ -1,5 +1,6 @@
 ---
 title: Security and multi-tenancy
+permalink: /security/
 ---
 
 ## The security model built into the library

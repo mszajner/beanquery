@@ -1,5 +1,6 @@
 ---
 title: References and module boundaries
+permalink: /references/
 ---
 
 Two `@Queryable` entities can be connected in three ways. In practice the choice is about

@@ -1,5 +1,6 @@
 ---
 title: Entity mapping
+permalink: /entities/
 ---
 
 The whole "data model" of the API is annotations on your JPA entities. Package:

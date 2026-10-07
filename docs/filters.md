@@ -1,5 +1,6 @@
 ---
 title: Filters and operators
+permalink: /filters/
 ---
 
 ## Filter syntax

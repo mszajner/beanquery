@@ -1,5 +1,6 @@
 ---
 title: Troubleshooting
+permalink: /troubleshooting/
 ---
 
 ## Application startup problems

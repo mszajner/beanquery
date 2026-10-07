@@ -1,5 +1,6 @@
 ---
 title: API reference
+permalink: /api/
 ---
 
 The default base path is `/api/bq` (change it with `beanquery.base-path`).

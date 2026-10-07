@@ -1,5 +1,6 @@
 ---
 title: Quick start
+permalink: /getting-started/
 ---
 
 This guide takes you from an empty Spring Boot project to a working query.
