@@ -1,0 +1,19 @@
+- title: Start here
+  items:
+    - { title: Overview, url: / }
+    - { title: Quick start, url: /getting-started/ }
+- title: Using beanquery
+  items:
+    - { title: Entity mapping, url: /entities/ }
+    - { title: API reference, url: /api/ }
+    - { title: Filters and operators, url: /filters/ }
+    - { title: Client integration, url: /client/ }
+- title: Advanced
+  items:
+    - { title: Security and multi-tenancy, url: /security/ }
+    - { title: References and module boundaries, url: /references/ }
+    - { title: Configuration and extension, url: /configuration/ }
+- title: Reference
+  items:
+    - { title: Limitations and roadmap, url: /limitations/ }
+    - { title: Troubleshooting, url: /troubleshooting/ }

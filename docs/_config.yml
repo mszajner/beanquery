@@ -1,0 +1,22 @@
+title: beanquery
+description: Whitelist-first REST query API over JPA entities for Spring Boot
+lang: en
+baseurl: "/beanquery"
+url: "https://mszajner.github.io"
+repo_url: "https://github.com/mszajner/beanquery"
+
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+exclude:
+  - superpowers
+  - README.md

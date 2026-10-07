@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/logo/beanquery-logo-dark.svg">
-    <img src="docs/logo/beanquery-logo.svg" alt="beanquery" width="420">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo/beanquery-logo-dark.svg">
+    <img src="docs/assets/logo/beanquery-logo.svg" alt="beanquery" width="420">
   </picture>
 </p>
 
@@ -10,6 +10,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Whitelist-first REST query API over JPA entities for Spring Boot.
+
+📖 **Documentation: <https://mszajner.github.io/beanquery/>**
 
 You annotate the entities and fields you want to expose; beanquery serves a
 metadata endpoint and a query endpoint that turn JSON requests into safe JPA
